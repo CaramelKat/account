@@ -27,9 +27,10 @@ import { config } from '@/config-manager';
 
 const app = express();
 
-// * START APPLICATION
-
-// * Create router
+// START APPLICATION
+app.set('view engine', 'ejs');
+app.set('views', __dirname + '/views');
+// Create router
 LOG_INFO('Setting up Middleware');
 app.use(morgan('dev'));
 app.use(express.json());
