@@ -571,21 +571,14 @@ router.put('/@me', async (request: express.Request, response: express.Response):
 		return;
 	}
 
-	const gender = person.gender ? person.gender : pnid.gender;
-	const region = person.region ? person.region : pnid.region;
-	const countryCode = person.country ? person.country : pnid.country;
-	const language = person.language ? person.language : pnid.language;
-	let timezoneName = person.tz_name ? person.tz_name : pnid.timezone.name;
-
-	// * Fix for 3DS sending empty person.tz_name, which is interpreted as an empty object
-	// TODO - See if there's a cleaner way to do this?
-
-	if (typeof timezoneName === 'object' && Object.keys(timezoneName).length === 0) {
-		timezoneName = pnid.timezone.name;
-	}
-
-	const marketingFlag = person.marketing_flag ? person.marketing_flag === 'Y' : pnid.flags.marketing;
-	const offDeviceFlag = person.off_device_flag ? person.off_device_flag === 'Y' : pnid.flags.off_device;
+	const gender: string = person.gender ? person.gender : pnid.gender;
+	const region: number = person.region ? person.region : pnid.region;
+	const countryCode: string = person.country ? person.country : pnid.country;
+	const language: string = person.language ? person.language : pnid.language;
+	// The 3DS sends an empty object when the timezone isn't updated, so this fixes validation from failing.
+	const timezoneName: string = (person.tz_name && !!Object.keys(person.tz_name).length) ? person.tz_name : pnid.timezone.name;
+	const marketingFlag: boolean = person.marketing_flag ? person.marketing_flag === 'Y' : pnid.flags.marketing;
+	const offDeviceFlag: boolean = person.off_device_flag ? person.off_device_flag === 'Y' : pnid.flags.off_device;
 
 	const regionLanguages = timezones[countryCode as keyof typeof timezones];
 	const regionTimezones = regionLanguages[language as keyof typeof regionLanguages] ? regionLanguages[language as keyof typeof regionLanguages] : Object.values(regionLanguages)[0];
@@ -613,9 +606,8 @@ router.put('/@me', async (request: express.Request, response: express.Response):
 	pnid.region = region;
 	pnid.timezone.name = timezoneName;
 	pnid.timezone.offset = Number(timezone.utc_offset);
-	pnid.timezone.marketing = marketingFlag;
-	pnid.timezone.off_device = offDeviceFlag;
-
+	pnid.flags.marketing = marketingFlag;
+	pnid.flags.off_device = offDeviceFlag;
 	await pnid.save();
 
 	response.send('');
