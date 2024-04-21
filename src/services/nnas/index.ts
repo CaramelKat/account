@@ -2,6 +2,7 @@
 
 import express from 'express';
 import subdomain from 'express-subdomain';
+import path from 'path';
 import clientHeaderCheck from '@/middleware/client-header';
 import cemuMiddleware from '@/middleware/cemu';
 import pnidMiddleware from '@/middleware/pnid';
@@ -15,6 +16,7 @@ import oauth from '@/services/nnas/routes/oauth';
 import people from '@/services/nnas/routes/people';
 import provider from '@/services/nnas/routes/provider';
 import support from '@/services/nnas/routes/support';
+import settings from '@/services/nnas/routes/settings';
 
 // * Router to handle the subdomain restriction
 const nnas = express.Router();
@@ -24,8 +26,29 @@ nnas.use(clientHeaderCheck);
 nnas.use(cemuMiddleware);
 nnas.use(pnidMiddleware);
 
+// Static routes for the user information app
+async function setCSSHeader(request: express.Request, response: express.Response, next: express.NextFunction): Promise<void> {
+	response.set('Content-Type', 'text/css');
+	return next();
+}
+
+async function setJSHeader(request: express.Request, response: express.Response, next: express.NextFunction): Promise<void> {
+	response.set('Content-Type', 'text/javascript');
+	return next();
+}
+
+async function setIMGHeader(request: express.Request, response: express.Response, next: express.NextFunction): Promise<void> {
+	response.set('Content-Type', 'application/octet-stream');
+	return next();
+}
+
 // * Setup routes
 LOG_INFO('[NNAS] Applying imported routes');
+nnas.use('/v1/account-settings/ui/', settings);
+nnas.use('/v1/account-settings/css/', setCSSHeader, express.static(path.join(__dirname, '../../assets/user-info-settings')));
+nnas.use('/v1/account-settings/js/', setJSHeader, express.static(path.join(__dirname, '../../assets/user-info-settings')));
+nnas.use('/v1/account-settings/img/', setIMGHeader, express.static(path.join(__dirname, '../../assets/user-info-settings')));
+
 nnas.use('/v1/api/admin', admin);
 nnas.use('/v1/api/content', content);
 nnas.use('/v1/api/devices', devices);
